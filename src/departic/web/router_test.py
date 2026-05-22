@@ -288,6 +288,7 @@ async def test_dashboard_configured(client):
     with (
         patch("departic.web.router.Settings") as mock_settings,
         patch("departic.web.router.scheduler") as mock_sched,
+        patch("departic.web.router.EvccAPI") as mock_api_cls,
     ):
         mock_settings.get.return_value = cfg
         mock_sched.get_status.return_value = {
@@ -298,6 +299,7 @@ async def test_dashboard_configured(client):
             "tick_error": None,
             "version": "0.0.0",
         }
+        mock_api_cls.return_value.get_interval.return_value = 30
         r = await client.get("/")
     assert r.status_code == 200
 
