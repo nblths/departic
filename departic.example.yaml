@@ -32,6 +32,12 @@ vehicle:
   #   Winter, cold     ≈ 24 kWh/100km
   consumption_kwh_per_100km: 20.0
 
+  # Minimum arrival SoC (%) added on top of the route-based target.
+  # If unset (default), Departic uses the vehicle's minSoc as configured
+  # in EVCC. Set this to override it, e.g. if you want a different buffer
+  # for Departic than what EVCC uses for its own charging plans.
+  # min_soc_pct: 20
+
   # Time window (hours) for back-to-back trip detection.
   # Trips departing within this window of the first trip have their
   # route SoC targets summed, with minSoc added once. Default: 24h.
@@ -67,7 +73,8 @@ agenda:
   # Tags that mark calendar events as departure/trip events.
   #
   # Target logic:
-  #   #trip + calendar location → routing (round trip) + EVCC minSoC = target SoC
+  #   #trip + calendar location → routing (round trip) + min_soc (config or
+  #     EVCC minSoc) = target SoC
   #   #trip (no location)       → 100% SoC default
   #
   # match:

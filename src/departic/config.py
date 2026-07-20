@@ -51,6 +51,16 @@ class VehicleConfig(BaseModel):
             "Used to convert route distance to a SoC target. "
         ),
     )
+    min_soc_pct: int | None = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description=(
+            "Minimum arrival SoC (%) to add on top of the route-based target. "
+            "Overrides the vehicle's minSoc as reported by EVCC. "
+            "Leave unset to use the EVCC-configured minSoc instead."
+        ),
+    )
     back_to_back_window_hours: float = Field(
         default=24.0,
         gt=0,

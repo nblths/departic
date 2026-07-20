@@ -2,7 +2,8 @@
 Departic controller: sets EVCC charging plans based on trip events.
 
 Target logic:
-  #trip + location -> route distance (round trip) + minSoc from EVCC -> SoC %
+  #trip + location -> route distance (round trip) + min_soc (config override or
+    EVCC minSoc) -> SoC %
   #trip (no location) -> 100% SoC
 
 Plan endpoint:
@@ -107,6 +108,18 @@ def _clear_plan_if_needed(evcc: EvccAPI, state: AppState, cfg: Settings) -> AppS
     return state.clear_plan()
 
 
+def effective_min_soc_pct(vehicle: VehicleInfo | None, cfg: Settings) -> int:
+    """
+    Resolve the minimum arrival SoC (%) to use.
+
+    The `vehicle.min_soc_pct` config setting takes precedence when set;
+    otherwise falls back to the minSoc reported by EVCC for the vehicle.
+    """
+    if cfg.vehicle.min_soc_pct is not None:
+        return cfg.vehicle.min_soc_pct
+    return (vehicle.min_soc_pct or 0) if vehicle else 0
+
+
 def _resolve_target(
     event: TripEvent, vehicle: VehicleInfo, cfg: Settings
 ) -> TripTarget:
@@ -133,7 +146,7 @@ def _resolve_target(
             route_km=None,
         )
 
-    min_soc = vehicle.min_soc_pct or 0
+    min_soc = effective_min_soc_pct(vehicle, cfg)
 
     trip_soc = calculate_trip_soc(
         location=event.location,
@@ -197,7 +210,7 @@ def _effective_target(
 
     targets = [_resolve_target(e, vehicle, cfg) for e in window_trips]
     first = targets[0]
-    min_soc = vehicle.min_soc_pct or 0
+    min_soc = effective_min_soc_pct(vehicle, cfg)
     # Each target already includes min_soc once; strip it to get raw route SoCs,
     # then add min_soc a single time for the combined total.
     raw_socs = [max(0, t.soc_pct - min_soc) for t in targets]
