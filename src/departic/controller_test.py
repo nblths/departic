@@ -21,6 +21,7 @@ from departic.controller import (
     _get_vehicle,
     _make_trip_state,
     _resolve_target,
+    effective_min_soc_pct,
     run_cycle,
 )
 from departic.evcc import EvccAPI
@@ -187,6 +188,48 @@ def test_resolve_target_routed(cfg):
     assert target.soc_pct == 42
     assert target.route_km == 35.0
     assert target.route_duration_min == 30.0
+
+
+# ── effective_min_soc_pct ──────────────────────────────────────────────────
+
+
+def test_effective_min_soc_pct_uses_evcc_when_unset(cfg):
+    """When vehicle.min_soc_pct is not configured, fall back to EVCC's minSoc."""
+    assert effective_min_soc_pct(make_vehicle(min_soc_pct=20), cfg) == 20
+
+
+def test_effective_min_soc_pct_config_overrides_evcc():
+    """Config min_soc_pct takes precedence over the EVCC-reported value."""
+    cfg = Settings(
+        evcc=EvccConfig(
+            url="http://evcc.test",
+            vehicle_title="MyCar",
+            home_address="Smallville, Midwest, Freedonia",
+        ),
+        vehicle=VehicleConfig(min_soc_pct=50),
+        agenda=AgendaConfig(feeds=[]),
+    )
+    assert effective_min_soc_pct(make_vehicle(min_soc_pct=20), cfg) == 50
+
+
+def test_effective_min_soc_pct_no_vehicle_no_override(cfg):
+    assert effective_min_soc_pct(None, cfg) == 0
+
+
+def test_resolve_target_uses_config_min_soc_override(cfg):
+    """The config override should be applied when calculating the route SoC."""
+    geocode_cache.set("Smallville, Midwest, Freedonia", (10.123, 20.456))
+    geocode_cache.set("Gotham", (11.234, 21.567))
+    route_cache.set("Smallville, Midwest, Freedonia", "Gotham", 35.0, 1800.0)
+
+    cfg = cfg.model_copy(
+        update={"vehicle": cfg.vehicle.model_copy(update={"min_soc_pct": 50})}
+    )
+    target = _resolve_target(
+        make_event(location="Gotham"), make_vehicle(min_soc_pct=20), cfg
+    )
+    assert target.calculation.min_soc_pct == 50
+    assert target.soc_pct == 72  # 22% raw route + 50% config override
 
 
 # ── _effective_target ─────────────────────────────────────────────────────

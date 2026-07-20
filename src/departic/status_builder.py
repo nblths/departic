@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, NamedTuple
 
-from departic.controller import TargetSource
+from departic.controller import TargetSource, effective_min_soc_pct
 from departic.models import (
     ActivePlan,
     AppState,
@@ -71,7 +71,7 @@ def precalculate_labels(
         return results
 
     capacity_kwh = vehicle.capacity_kwh if vehicle else None
-    min_soc_pct = (vehicle.min_soc_pct or 0) if vehicle else 0
+    min_soc_pct = effective_min_soc_pct(vehicle, cfg)
 
     for event in events:
         trip_id = event.trip_id
