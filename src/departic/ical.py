@@ -47,6 +47,9 @@ def _is_trip_event(summary: str, description: str, cfg: Settings) -> bool:
     summary_lower = summary.lower()
     combined_lower = f"{summary} {description}".lower()
 
+    if not cfg.agenda.trip_mapping:
+        return True
+
     for mapping in cfg.agenda.trip_mapping:
         tag = mapping.tag.lower()
 
