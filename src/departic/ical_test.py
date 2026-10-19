@@ -89,8 +89,8 @@ def test_to_local_dt_date():
         ("Holiday", "#trip", [("#trip", "contains")], True),
         # Matching is case-insensitive
         ("holiday #trip", "", [("#TRIP", "contains")], True),
-        # No mappings configured → never a trip
-        ("#trip event", "", [], False),
+        # No mappings configured → all events count as trips
+        ("#trip event", "", [], True),
     ],
 )
 def test_is_trip_event(summary, description, tags, expected):
