@@ -1,7 +1,7 @@
 # ── Stage 1: builder ──────────────────────────────────────────────────────
 # Installs dependencies into a virtual env using the locked versions.
 # The uv binary and all build-time tooling stay in this stage only.
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -23,7 +23,7 @@ RUN uv sync --frozen --no-dev
 # ── Stage 2: runtime ──────────────────────────────────────────────────────
 # Lean final image: only Python, the venv, and the application source.
 # No uv, no build tools, no cache.
-FROM python:3.14-slim AS runtime
+FROM python:3.15-slim AS runtime
 
 WORKDIR /app
 
